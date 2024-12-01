@@ -1,16 +1,16 @@
-import { Controller, Post, Param, Body } from '@nestjs/common';
+import { Controller, Post, Param, Body, UseGuards, Req } from '@nestjs/common';
 import { BingoService } from './bingo.service';
+import { AuthGuard } from '@nestjs/passport';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('bingo')
 export class BingoController {
     // eslint-disable-next-line prettier/prettier
     constructor(private readonly bingoService: BingoService) { }
 
     @Post('join-room/:roomCode')
-    async joinGameByRoomCode(
-        @Param('roomCode') roomCode: string,
-        @Body('userId') userId: string,
-    ) {
+    async joinGameByRoomCode(@Param('roomCode') roomCode: string, @Req() req) {
+        const userId = req.user.userId;
         const game = await this.bingoService.findGameByRoomCode(roomCode);
         return await this.bingoService.joinGame(game.id, userId);
     }

@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
     Injectable,
     NotFoundException,
@@ -107,7 +108,6 @@ export class BingoService {
 
         const newNumber =
             remainingNumbers[
-            // eslint-disable-next-line prettier/prettier
             Math.floor(Math.random() * remainingNumbers.length)
             ];
         game.calledNumbers.push(newNumber);
