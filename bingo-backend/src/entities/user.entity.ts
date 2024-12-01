@@ -3,7 +3,10 @@ import {
     PrimaryGeneratedColumn,
     Column,
     CreateDateColumn,
+    OneToMany,
 } from 'typeorm';
+import { GameParticipant } from './game_participant.entity';
+import { BingoCard } from './bingocard.entity';
 
 @Entity('users')
 export class User {
@@ -25,6 +28,9 @@ export class User {
     @CreateDateColumn()
     createdAt: Date;
 
-    @Column('array')
-    games: string[];
+    @OneToMany(() => GameParticipant, (participant) => participant.user)
+    participations: GameParticipant[];
+
+    @OneToMany(() => BingoCard, (bingoCard) => bingoCard.owner)
+    bingoCards: BingoCard[];
 }

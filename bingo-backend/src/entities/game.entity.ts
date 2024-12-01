@@ -2,9 +2,11 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     Column,
+    OneToMany,
     ManyToOne,
     CreateDateColumn,
 } from 'typeorm';
+import { GameParticipant } from './game_participant.entity';
 import { User } from './user.entity';
 
 export enum GameStatus {
@@ -18,8 +20,13 @@ export class Game {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column('jsonb')
-    bingoCard: number[][];
+    @Column({
+        unique: true,
+    })
+    roomCode: string; // Código único para la sala
+
+    @Column({ type: 'int', array: true })
+    calledNumbers: number[];
 
     @Column({
         type: 'enum',
@@ -28,11 +35,11 @@ export class Game {
     })
     status: GameStatus;
 
-    @Column('int', { array: true, default: [] })
-    calledNumbers: number[];
+    @OneToMany(() => GameParticipant, (participant) => participant.game)
+    participants: GameParticipant[];
 
-    @ManyToOne(() => User, (user) => user.games)
-    user: User;
+    @ManyToOne(() => User, { nullable: true })
+    winner: User;
 
     @CreateDateColumn()
     createdAt: Date;
