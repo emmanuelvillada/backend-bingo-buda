@@ -15,7 +15,7 @@ export class AuthController {
     @Get('google/callback')
     @UseGuards(AuthGuard('google'))
     async googleLoginCallback(@Req() req, @Res() res) {
-        const { access_token, user } = this.authService.generateJwt(req.user);
+        const { access_token } = this.authService.generateJwt(req.user);
 
         // Redirigir al frontend con el token
         res.redirect(`http://localhost:3000/login?token=${access_token}`);
