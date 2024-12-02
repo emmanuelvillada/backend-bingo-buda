@@ -20,12 +20,7 @@ export class Game {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({
-        unique: true,
-    })
-    roomCode: string; // Código único para la sala
-
-    @Column({ type: 'int', array: true })
+    @Column({ type: 'int', array: true, default: [] })
     calledNumbers: number[];
 
     @Column({
@@ -35,7 +30,9 @@ export class Game {
     })
     status: GameStatus;
 
-    @OneToMany(() => GameParticipant, (participant) => participant.game)
+    @OneToMany(() => GameParticipant, (participant) => participant.game, {
+        eager: true,
+    })
     participants: GameParticipant[];
 
     @ManyToOne(() => User, { nullable: true })
