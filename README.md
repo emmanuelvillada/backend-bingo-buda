@@ -8,11 +8,7 @@ npm o yarn
 Configuración de Base de Datos
 
 Crear una base de datos PostgreSQL llamada bingo_game
-Configurar las credenciales de conexión en el archivo .env del backend
 
-Clonar el Repositorio
-bashCopygit clone <url-del-repositorio>
-cd <nombre-del-proyecto>
 Configuración del Backend (NestJS)
 
 Navegar al directorio del backend
