@@ -13,10 +13,13 @@ export class GameParticipant {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @ManyToOne(() => User, (user) => user.participations)
+    @ManyToOne(() => User, (user) => user.participations, {
+        onDelete: 'CASCADE',
+        eager: true,
+    })
     user: User;
 
-    @ManyToOne(() => Game, (game) => game.participants)
+    @ManyToOne(() => Game, (game) => game.participants, { onDelete: 'CASCADE' })
     game: Game;
 
     @Column({
