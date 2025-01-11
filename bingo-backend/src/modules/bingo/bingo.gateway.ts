@@ -24,6 +24,17 @@ export class BingoGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     handleConnection(client: Socket) {
         console.log('Nuevo cliente conectado:', client.id);
+        this.connectedClients.set(client.id, client);
+
+        // Notificar al lobby de la conexión
+        for (const [lobbyId, socket] of this.connectedClients) {
+            if (socket === client) {
+                this.server
+                    .to(lobbyId)
+                    .emit('player-connected', { id: client.id });
+                break;
+            }
+        }
     }
 
     handleDisconnect(client: Socket) {

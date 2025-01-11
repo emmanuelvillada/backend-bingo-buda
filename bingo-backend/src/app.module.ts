@@ -10,6 +10,8 @@ import { BingoModule } from './modules/bingo/bingo.module';
         ConfigModule.forRoot({
             isGlobal: true,
             envFilePath: '.env',
+            expandVariables: true,
+            cache: true,
         }),
         TypeOrmModule.forRoot(databaseConfig),
         AuthModule,
