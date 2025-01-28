@@ -170,7 +170,7 @@ export class BingoService {
         await this.gameRepository.save(game);
 
         // Notificar a todos los jugadores la nueva balota
-        this.gateway.sendNewBallot(game.id, newNumber);
+        this.gateway.notifyBallotGenerated(game.id, newNumber);
 
         return { number: newNumber };
     }

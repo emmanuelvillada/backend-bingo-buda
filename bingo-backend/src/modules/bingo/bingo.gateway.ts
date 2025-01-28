@@ -2,12 +2,15 @@ import {
     WebSocketGateway,
     WebSocketServer,
     SubscribeMessage,
-    MessageBody,
     OnGatewayConnection,
     OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
+interface user {
+    id: string;
+    name: string;
+}
 @WebSocketGateway({
     cors: {
         origin: ['http://localhost:3000', 'http://localhost:3001'],
@@ -18,118 +21,48 @@ export class BingoGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;
 
-    private lobbyTimers: Map<string, NodeJS.Timeout> = new Map();
-    private countdowns: Map<string, number> = new Map(); // Tiempo restante por lobby en segundos
-    private connectedClients = new Map<string, Socket>();
-
     handleConnection(client: Socket) {
-        console.log('Nuevo cliente conectado:', client.id);
-        this.connectedClients.set(client.id, client);
-
-        // Notificar al lobby de la conexión
-        for (const [lobbyId, socket] of this.connectedClients) {
-            if (socket === client) {
-                this.server
-                    .to(lobbyId)
-                    .emit('player-connected', { id: client.id });
-                break;
-            }
-        }
+        console.log(`Client connected: ${client.id}`);
     }
 
     handleDisconnect(client: Socket) {
-        console.log('Cliente desconectado:', client.id);
-        this.connectedClients.delete(client.id);
-
-        // Notificar al lobby de la desconexión
-        for (const [lobbyId, socket] of this.connectedClients) {
-            if (socket === client) {
-                this.server
-                    .to(lobbyId)
-                    .emit('player-disconnected', { id: client.id });
-                break;
-            }
-        }
+        console.log(`Client disconnected: ${client.id}`);
     }
 
-    notifyPlayerJoined(lobbyId: string, player: { id: string; name: string }) {
-        this.server.to(lobbyId).emit('player-joined', player);
+    //Notify all players that a new player has joined the lobby
+    @SubscribeMessage('join')
+    notifyPlayerJoined(lobbyId: string, user: user) {
+        console.log(`User ${user.name} has joined the lobby ${lobbyId}`);
+        this.server
+            .to(lobbyId)
+            .emit(`New player joined the lobby ${user.id}  in lobby `, lobbyId);
     }
 
+    //Notify all players that the game has started
+    @SubscribeMessage('start')
     notifyGameStart(lobbyId: string) {
-        this.server.to(lobbyId).emit('game-start');
+        console.log(`Game started in lobby ${lobbyId}`);
+        this.server.to(lobbyId).emit('Game started');
     }
 
-    notifyWinner(lobbyId: string, winner: { id: string; name: string }) {
-        this.server.to(lobbyId).emit('game-winner', winner);
+    //Notify all players that the game has ended
+    @SubscribeMessage('end')
+    notifyGameEnded(lobbyId: string) {
+        console.log(`Game ended in lobby ${lobbyId}`);
+        this.server.to(lobbyId).emit('Game ended');
     }
 
-    // Enviar nueva balota a todos los jugadores
-    sendNewBallot(lobbyId: string, ballot: number) {
-        this.server.to(lobbyId).emit('new-ballot', ballot);
+    //Notify all players that a new ballot has been generated
+    @SubscribeMessage('ballot')
+    notifyBallotGenerated(gameId: string, newNumber: number) {
+        console.log(`Ballot generated in lobby ${gameId}: ${newNumber}`);
+        this.server.to(gameId).emit('Ballot generated', newNumber);
     }
 
-    // Notificar descalificación
-    notifyDisqualification(
-        lobbyId: string,
-        player: { id: string; name: string },
-    ) {
-        this.server.to(lobbyId).emit('player-disqualified', player);
-    }
-
-    @SubscribeMessage('join-lobby')
-    handleJoinLobby(
-        client: Socket,
-        @MessageBody()
-        data: { lobbyId: string; player: { id: string; name: string } },
-    ) {
-        console.log('Join Lobby Event Received:', data); // Add this line
-        if (!data.lobbyId || !data.player) return;
-
-        client.join(data.lobbyId);
-        this.connectedClients.set(client.id, client);
-        this.notifyPlayerJoined(data.lobbyId, data.player);
-
-        if (!this.lobbyTimers.has(data.lobbyId)) {
-            this.startCountdown(data.lobbyId);
-        }
-    }
-
-    @SubscribeMessage('request-game-state')
-    handleRequestGameState(
-        client: Socket,
-        @MessageBody() data: { lobbyId: string },
-    ) {
-        const state = {
-            lobbyId: data.lobbyId,
-            timeLeft: this.countdowns.get(data.lobbyId) || 0,
-        };
-        this.server.to(client.id).emit('game-state', state);
-    }
-    private startCountdown(lobbyId: string) {
-        let timeLeft = 60;
-        this.countdowns.set(lobbyId, timeLeft);
-
-        const timer = setInterval(() => {
-            timeLeft -= 1;
-            this.countdowns.set(lobbyId, timeLeft);
-
-            this.server.to(lobbyId).emit('time-left', timeLeft);
-
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                this.removeInactiveLobby(lobbyId);
-                this.server.to(lobbyId).emit('game-start');
-            }
-        }, 1000);
-
-        this.lobbyTimers.set(lobbyId, timer);
-    }
-
-    private removeInactiveLobby(lobbyId: string) {
-        this.lobbyTimers.delete(lobbyId);
-        this.countdowns.delete(lobbyId);
-        this.server.to(lobbyId).emit('lobby-closed');
-        console.log(`Lobby ${lobbyId} eliminado por inactividad`);
+    //Notify all players that a player has won
+    @SubscribeMessage('win')
+    notifyWinner(gameId: string, user: user) {
+        console.log(`Player ${user.name} has won in lobby ${gameId}`);
+        this.server.to(gameId).emit('Winner', user);
     }
 }
